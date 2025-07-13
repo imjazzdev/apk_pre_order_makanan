@@ -1,0 +1,2 @@
+C:/Users/ASUS/Desktop/apk_pre_order_makanan/android/app/.cxx/Debug/6w2f5y1m/x86/CMakeFiles/edit_cache.dir
+C:/Users/ASUS/Desktop/apk_pre_order_makanan/android/app/.cxx/Debug/6w2f5y1m/x86/CMakeFiles/rebuild_cache.dir
