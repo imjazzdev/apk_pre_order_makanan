@@ -1,3 +1,4 @@
+import 'package:apk_pre_order_makanan/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'login.dart';
 import 'menu.dart';
@@ -10,6 +11,10 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
   bool _isChecked = false;
 
   @override
@@ -33,25 +38,18 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             ),
             const SizedBox(height: 40),
-
             const Text('Nama Lengkap'),
             const SizedBox(height: 8),
-            _buildTextField(),
-
+            _buildTextField(controller: _nameController),
             const SizedBox(height: 20),
-
             const Text('Alamat Email'),
             const SizedBox(height: 8),
-            _buildTextField(),
-
+            _buildTextField(controller: _emailController),
             const SizedBox(height: 20),
-
             const Text('Password'),
             const SizedBox(height: 8),
-            _buildTextField(obscure: true),
-
+            _buildTextField(controller: _passwordController, obscure: true),
             const SizedBox(height: 20),
-
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -71,20 +69,16 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ],
             ),
-
             const SizedBox(height: 20),
-
             ElevatedButton(
               onPressed: () {
                 if (_isChecked) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MenuPage()),
-                  );
+                  _handleSignup();
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text('Silakan setujui ketentuan terlebih dahulu')),
+                        content:
+                            Text('Silakan setujui ketentuan terlebih dahulu')),
                   );
                 }
               },
@@ -101,9 +95,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
             ),
-
             const SizedBox(height: 15),
-
             Row(
               children: const [
                 Expanded(child: Divider(thickness: 1)),
@@ -114,9 +106,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 Expanded(child: Divider(thickness: 1)),
               ],
             ),
-
             const SizedBox(height: 20),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -126,7 +116,8 @@ class _SignUpPageState extends State<SignUpPage> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const LoginPage()),
                     );
                   },
                   child: const Text(
@@ -139,7 +130,6 @@ class _SignUpPageState extends State<SignUpPage> {
                 )
               ],
             ),
-
             const SizedBox(height: 30),
           ],
         ),
@@ -147,8 +137,10 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  Widget _buildTextField({bool obscure = false}) {
+  Widget _buildTextField(
+      {required TextEditingController controller, bool obscure = false}) {
     return TextField(
+      controller: controller,
       obscureText: obscure,
       decoration: InputDecoration(
         filled: true,
@@ -157,8 +149,48 @@ class _SignUpPageState extends State<SignUpPage> {
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
+  }
+
+  Future<void> _handleSignup() async {
+    if (_nameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Semua field wajib diisi')),
+      );
+      return;
+    }
+
+    // Panggil backend
+    try {
+      final response = await ApiService().signup(
+        _nameController.text,
+        _emailController.text,
+        _passwordController.text,
+      );
+
+      if (response['status'] == 'success') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Berhasil daftar!')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MenuPage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response['message'] ?? 'Gagal daftar')),
+        );
+      }
+    } catch (e) {
+      print('FAILED: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Terjadi kesalahan: $e')),
+      );
+    }
   }
 }

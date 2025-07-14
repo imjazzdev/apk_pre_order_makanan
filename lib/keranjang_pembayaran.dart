@@ -1,5 +1,8 @@
+import 'package:apk_pre_order_makanan/services/api_service.dart';
+import 'package:apk_pre_order_makanan/utils/var_global.dart';
 import 'package:flutter/material.dart';
-import 'keranjang_data.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
 import 'menu.dart';
 import 'status_pemesanan.dart';
 import 'profile.dart';
@@ -17,6 +20,13 @@ class _KeranjangDanPembayaranPageState
     extends State<KeranjangDanPembayaranPage> {
   int _selectedIndex = 1;
   String selectedTime = '';
+  String user_id = '';
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    loadUserData();
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -47,113 +57,118 @@ class _KeranjangDanPembayaranPageState
     }
   }
 
+  void loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      user_id = prefs.getString("user_id") ?? '';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    int totalHarga = keranjang.fold<int>(
-      0,
-          (total, item) =>
-      total + (item['price'] as int) * ((item['quantity'] ?? 1) as int),
-    );
+    double totalHarga = VarGlobal.keranjang.fold(0, (total, item) {
+      final harga = item['price'];
+      final jumlah = item['quantity'] ?? 1;
+      return total + (harga * jumlah);
+    });
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Keranjang'),
         backgroundColor: Colors.pinkAccent,
       ),
-      body: keranjang.isEmpty
+      body: VarGlobal.keranjang.isEmpty
           ? const Center(child: Text('Keranjang masih kosong'))
           : ListView.builder(
-        itemCount: keranjang.length,
-        itemBuilder: (context, index) {
-          final item = keranjang[index];
-          return Padding(
-            padding:
-            const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    IconButton(
-                      icon:
-                      const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () {
-                        setState(() {
-                          keranjang.removeAt(index);
-                        });
-                      },
-                    ),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        item['image'],
-                        width: 85,
-                        height: 85,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
+              itemCount: VarGlobal.keranjang.length,
+              itemBuilder: (context, index) {
+                final item = VarGlobal.keranjang[index];
+                return Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item['name'],
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18)),
-                          const SizedBox(height: 4),
-                          Text(
-                              'Rp ${item['price']} x ${item['quantity']}',
-                              style: const TextStyle(fontSize: 14)),
-                          Text(
-                              'Subtotal: Rp ${item['price'] * item['quantity']}',
-                              style: const TextStyle(fontSize: 14)),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              setState(() {
+                                VarGlobal.keranjang.removeAt(index);
+                              });
+                            },
+                          ),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.asset(
+                              item['image_url'],
+                              width: 85,
+                              height: 85,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item['name'],
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18)),
+                                const SizedBox(height: 4),
+                                Text(
+                                    'Rp ${item['price']} x ${item['quantity']}',
+                                    style: const TextStyle(fontSize: 14)),
+                                // Text(
+                                //     'Subtotal: Rp ${double.tryParse(item['price'])?.toInt() * double.tryParse(item['quantity'])!.toInt()}',
+                                //     style: const TextStyle(fontSize: 14)),
+                              ],
+                            ),
+                          ),
+                          // Column(
+                          //   children: [
+                          //     Row(
+                          //       children: [
+                          //         IconButton(
+                          //           icon: const Icon(Icons.remove),
+                          //           onPressed: () {
+                          //             setState(() {
+                          //               if (item['quantity'] > 1) {
+                          //                 item['quantity']--;
+                          //               } else {
+                          //                 VarGlobal.keranjang.removeAt(index);
+                          //               }
+                          //             });
+                          //           },
+                          //         ),
+                          //         Text('${item['quantity']}',
+                          //             style: const TextStyle(fontSize: 16)),
+                          //         IconButton(
+                          //           icon: const Icon(Icons.add),
+                          //           onPressed: () {
+                          //             setState(() {
+                          //               item['quantity']++;
+                          //             });
+                          //           },
+                          //         ),
+                          //       ],
+                          //     ),
+                          //   ],
+                          // ),
                         ],
                       ),
-                    ),
-                    Column(
-                      children: [
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.remove),
-                              onPressed: () {
-                                setState(() {
-                                  if (item['quantity'] > 1) {
-                                    item['quantity']--;
-                                  } else {
-                                    keranjang.removeAt(index);
-                                  }
-                                });
-                              },
-                            ),
-                            Text('${item['quantity']}',
-                                style:
-                                const TextStyle(fontSize: 16)),
-                            IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: () {
-                                setState(() {
-                                  item['quantity']++;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (keranjang.isNotEmpty)
+          if (VarGlobal.keranjang.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
@@ -231,32 +246,90 @@ class _KeranjangDanPembayaranPageState
                       ElevatedButton(
                         onPressed: selectedTime.isEmpty
                             ? null
-                            : () {
-                          final pesananSebelumClear =
-                          List<Map<String, dynamic>>.from(keranjang);
+                            : () async {
+                                final pesananSebelumClear =
+                                    List<Map<String, dynamic>>.from(
+                                  VarGlobal.keranjang,
+                                );
 
-                          // Simpan ke riwayat_data
-                          pesananTerakhir = pesananSebelumClear;
-                          waktuPengambilanTerakhir = selectedTime;
-                          waktuPemesananTerakhir = DateTime.now();
+                                // Hitung dan simpan subtotal per item
+                                VarGlobal.detailSubtotal =
+                                    pesananSebelumClear.map((item) {
+                                  final harga = item['price'];
+                                  final jumlah = item['quantity'] ?? 1;
+                                  final subtotal = harga * jumlah;
+                                  return {
+                                    'menu_id':
+                                        item['id'], // HARUS ADA di keranjang
+                                    'name': item['name'],
+                                    'price': harga,
+                                    'quantity': jumlah,
+                                    'subtotal': subtotal,
+                                  };
+                                }).toList();
 
-                          setState(() {
-                            keranjang.clear();
-                          });
+                                // Hitung total dan simpan
+                                VarGlobal.totalHarga =
+                                    VarGlobal.detailSubtotal.fold<int>(
+                                  0,
+                                  (total, item) =>
+                                      total + (item['subtotal'] as int),
+                                );
 
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => StatusPage(
-                                pesanan: pesananTerakhir,
-                                waktuPengambilan:
-                                waktuPengambilanTerakhir,
-                                waktuPemesanan:
-                                waktuPemesananTerakhir,
-                              ),
-                            ),
-                          );
-                        },
+                                try {
+                                  // Kirim ke server
+                                  final result = await ApiService().postOrders(
+                                    user_id,
+                                    VarGlobal.totalHarga.toString(),
+                                    VarGlobal.detailSubtotal.map((e) {
+                                      return {
+                                        "menu_id": e['menu_id'],
+                                        "quantity": e['quantity'],
+                                        "price": e['price'],
+                                      };
+                                    }).toList(),
+                                  );
+
+                                  if (result['status'] == 'success') {
+                                    // Simpan data pemesanan lokal
+                                    pesananTerakhir = pesananSebelumClear;
+                                    waktuPengambilanTerakhir = selectedTime;
+                                    waktuPemesananTerakhir = DateTime.now();
+
+                                    // Kosongkan keranjang
+                                    setState(() {
+                                      VarGlobal.keranjang.clear();
+                                    });
+
+                                    // Pindah ke halaman status
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => StatusPage(
+                                          pesanan: pesananTerakhir,
+                                          waktuPengambilan:
+                                              waktuPengambilanTerakhir,
+                                          waktuPemesanan:
+                                              waktuPemesananTerakhir,
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    // Tampilkan pesan error
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(result['message'])),
+                                    );
+                                  }
+                                } catch (e) {
+                                  print('TERJADI KESALAHAN: $e');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            "Terjadi kesalahan saat memesan")),
+                                  );
+                                }
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           padding: const EdgeInsets.symmetric(

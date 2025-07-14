@@ -1,6 +1,7 @@
+import 'package:apk_pre_order_makanan/services/api_service.dart';
+import 'package:apk_pre_order_makanan/utils/var_global.dart';
 import 'package:flutter/material.dart';
 import 'keranjang_pembayaran.dart';
-import 'keranjang_data.dart';
 import 'status_pemesanan.dart';
 import 'profile.dart';
 
@@ -14,33 +15,46 @@ class MenuPage extends StatefulWidget {
 class _MenuPageState extends State<MenuPage> {
   final TextEditingController searchController = TextEditingController();
 
-  final List<Map<String, dynamic>> menuItems = const [
-    {'name': 'Nasi Goreng', 'price': 12000, 'image': 'images/nasi_goreng.jpg'},
-    {'name': 'Ayam Kremes', 'price': 12000, 'image': 'images/ayam_kremes.jpg'},
-    {'name': 'Sop Ayam', 'price': 12000, 'image': 'images/sop_ayam.jpg'},
-    {'name': 'Gado-Gado', 'price': 12000, 'image': 'images/gado-gado.jpeg'},
-    {
-      'name': 'Nasi Ayam Katsu',
-      'price': 12000,
-      'image': 'images/mie_rebus.jpg'
-    },
-    {'name': 'Nasi Bakar', 'price': 12000, 'image': 'images/nasi_bakar.jpg'},
-  ];
-
+  List<Map<String, dynamic>> menus = [];
+  bool isLoading = true;
   List<Map<String, dynamic>> filteredMenu = [];
 
   @override
   void initState() {
     super.initState();
-    filteredMenu = List.from(menuItems); // Awal: tampilkan semua
+    filteredMenu = List.from(menus); // Awal: tampilkan semua
     searchController.addListener(_filterMenu); // Dengarkan input teks
+    getMenus();
+  }
+
+  void getMenus() async {
+    try {
+      final data = await ApiService().getMenus();
+      setState(() {
+        menus = List<Map<String, dynamic>>.from(data);
+        filteredMenu = List.from(menus);
+        isLoading = false;
+      });
+      for (var item in menus) {
+        print('==== DATA DARI DATABASE ====');
+        item.forEach((key, value) {
+          print('$key => $value (${value.runtimeType})');
+        });
+      }
+    } catch (e) {
+      print("Error: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   void _filterMenu() {
+    print('FILTER MENU $filteredMenu');
     final query = searchController.text.toLowerCase();
 
     setState(() {
-      filteredMenu = menuItems.where((item) {
+      filteredMenu = menus.where((item) {
         final name = item['name'].toString().toLowerCase();
         return name.contains(query);
       }).toList();
@@ -126,7 +140,7 @@ class _MenuPageState extends State<MenuPage> {
               context,
               MaterialPageRoute(
                 builder: (context) => StatusPage(
-                  pesanan: keranjang,
+                  pesanan: VarGlobal.keranjang,
                   waktuPemesanan: DateTime.now(),
                   waktuPengambilan: "30",
                 ),
@@ -164,7 +178,7 @@ class _MenuPageState extends State<MenuPage> {
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             child: Image.asset(
-              item['image'],
+              item['image_url'],
               height: 110,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -187,16 +201,23 @@ class _MenuPageState extends State<MenuPage> {
                 const SizedBox(height: 5),
                 ElevatedButton.icon(
                   onPressed: () {
-                    final existingItemIndex = keranjang.indexWhere(
+                    final existingItemIndex = VarGlobal.keranjang.indexWhere(
                       (element) => element['name'] == item['name'],
                     );
 
                     if (existingItemIndex != -1) {
-                      keranjang[existingItemIndex]['quantity'] += 1;
+                      VarGlobal.keranjang[existingItemIndex]['quantity'] += 1;
                     } else {
-                      keranjang.add({
+                      VarGlobal.keranjang.add({
                         ...item,
                         'quantity': 1,
+                      });
+                    }
+
+                    for (var item in VarGlobal.keranjang) {
+                      print('==== ITEM ====');
+                      item.forEach((key, value) {
+                        print('$key => $value (${value.runtimeType})');
                       });
                     }
 

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -14,6 +15,22 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController namaController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   File? _imageFile;
+  String role = '';
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserData();
+  }
+
+  void loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      namaController.text = prefs.getString("name") ?? '';
+      emailController.text = prefs.getString("email") ?? '';
+      role = prefs.getString("role") ?? '';
+    });
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -55,15 +72,18 @@ class _ProfilePageState extends State<ProfilePage> {
                     CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.grey[300],
-                      backgroundImage: _imageFile != null ? FileImage(_imageFile!) : null,
+                      backgroundImage:
+                          _imageFile != null ? FileImage(_imageFile!) : null,
                       child: _imageFile == null
-                          ? const Icon(Icons.account_circle, size: 80, color: Colors.black)
+                          ? const Icon(Icons.account_circle,
+                              size: 80, color: Colors.black)
                           : null,
                     ),
                     const SizedBox(height: 8),
                     const Text(
                       'Ganti Foto Anda',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.black54),
                     ),
                   ],
                 ),
@@ -71,7 +91,8 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
 
             const SizedBox(height: 30),
-            const Text('Nama Anda', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Nama Anda',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             _buildTextField(namaController),
             const SizedBox(height: 20),
@@ -80,10 +101,14 @@ class _ProfilePageState extends State<ProfilePage> {
             _buildTextField(emailController),
             const SizedBox(height: 40),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.clear(); // Hapus data yang tersimpan
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => LoginPage(),
+                  ),
+                  (Route<dynamic> route) => false,
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -95,7 +120,10 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               child: const Text(
                 'Log Out',
-                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16),
               ),
             ),
           ],
@@ -107,6 +135,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildTextField(TextEditingController controller) {
     return TextField(
       controller: controller,
+      readOnly: true,
       decoration: InputDecoration(
         filled: true,
         fillColor: const Color(0xFFF9C9D5),
@@ -114,7 +143,8 @@ class _ProfilePageState extends State<ProfilePage> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
   }

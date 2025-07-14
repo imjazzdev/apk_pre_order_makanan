@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:apk_pre_order_makanan/halaman_utama.dart';
 
-
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 }
 
